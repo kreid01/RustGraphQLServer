@@ -1,0 +1,14 @@
+datasource db {
+    provider = "postgres"
+    url      = "postgresql://postgres:postgres@rust-db.ckmkjso8uorb.eu-west-1.rds.amazonaws.com:5432/postgres&schema=public"
+}
+
+generator client {
+    provider = "cargo prisma"
+    output   = "../src/prisma.rs"
+}
+
+model User {
+    id          String @id
+    displayName String
+}
