@@ -9,6 +9,27 @@ generator client {
 }
 
 model User {
-    id          String @id
+    id          Int    @id @default(autoincrement())
     displayName String
+    decks       Deck[]
+    cards       Card[]
+}
+
+model Deck {
+    id      Int    @id @default(autoincrement())
+    User    User   @relation(fields: [user_id], references: [id])
+    title   String
+    user_id Int
+    cards   Card[]
+}
+
+model Card {
+    id         Int    @id @default(autoincrement())
+    question   String
+    answer     String
+    user       User   @relation(fields: [user_id], references: [id])
+    user_id    Int
+    deck       Deck   @relation(fields: [deck_id], references: [id])
+    deck_id    Int
+    difficulty Int
 }
