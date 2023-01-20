@@ -28,4 +28,9 @@ dotenv = "0.15.0"
 # Prisma 
 prisma-client-rust = { git = "https://github.com/Brendonovich/prisma-client-rust", tag = "0.6.4" }
 prisma-client-rust-cli = { git = "https://github.com/Brendonovich/prisma-client-rust", tag = "0.6.4" }
-serde = "1.0.152"
+serde = {version = "1.0.152", features = ["derive"] }
+
+# Auth 
+bcrypt = "0.13"
+jsonwebtoken = "8"
+chrono = "0.4.23"

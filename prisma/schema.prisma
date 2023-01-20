@@ -11,8 +11,9 @@ generator client {
 model User {
     id          Int    @id @default(autoincrement())
     displayName String
+    email       String
+    password    String
     decks       Deck[]
-    cards       Card[]
 }
 
 model Deck {
@@ -25,11 +26,9 @@ model Deck {
 
 model Card {
     id         Int    @id @default(autoincrement())
-    question   String
-    answer     String
-    user       User   @relation(fields: [user_id], references: [id])
-    user_id    Int
     deck       Deck   @relation(fields: [deck_id], references: [id])
     deck_id    Int
+    answer     String
+    question   String
     difficulty Int
 }

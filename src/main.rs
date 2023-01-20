@@ -13,8 +13,7 @@ use dotenv::dotenv;
 
 pub mod graphql;
 pub mod prisma;
-
-
+pub mod utils;
 
 async fn graphql_handler(schema: Extension<AppSchema>, req: GraphQLRequest) -> GraphQLResponse {
     schema.execute(req.into_inner()).await.into()
