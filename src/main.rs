@@ -3,17 +3,27 @@ use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
     extract::Extension,
     response::{Html, IntoResponse},
-    routing::get,
+    routing::{get, post},
     Router,
+    http::StatusCode,
+    Json,
 };
 use graphql::schema::{build_schema, AppSchema};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 
 #[cfg(debug_assertions)]
 use dotenv::dotenv;
+use serde_json::{json, Value};
+use utils::auth::{decode_token, get_token_auth};
 
 pub mod graphql;
 pub mod prisma;
 pub mod utils;
+
+pub trait Bounds:Serialize + Sync + Send + Unpin + DeserializeOwned {}
+impl<T> Bounds for T where T: Serialize + Sync + Send + Unpin + DeserializeOwned
+{}
 
 async fn graphql_handler(schema: Extension<AppSchema>, req: GraphQLRequest) -> GraphQLResponse {
     schema.execute(req.into_inner()).await.into()
@@ -25,8 +35,35 @@ async fn graphql_playground() -> impl IntoResponse {
     )))
 }
 
-// Note: This template uses Axum, but the bulk of the setup is for async_graphql. You should be able
-// to easily swap out Axum for your preferred framework (e.g. Rocket, actix, etc).
+struct TokenResponse {
+    access_token: String,
+    refresh_token: String,
+}
+
+async fn users<T:Bounds>(Json(payload): Json<Value>) -> impl IntoResponse {
+
+    let payload = payload;
+
+    let jwt = payload.get("jwt").unwrap().as_str().unwrap();;
+
+    let claims = decode_token(&jwt.to_string());
+
+    let auth = get_token_auth(&jwt.to_string());
+
+    match auth {
+        Ok(_) => {
+            let json = Json(serde_json::to_value(&claims).unwrap());
+            return (StatusCode::OK, json);
+        }
+        Err(e) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(json!({"error": e.to_string()})),
+            )
+        }
+    }
+}
+
 
 #[tokio::main]
 async fn main() {
@@ -36,16 +73,13 @@ async fn main() {
     let schema = build_schema().await;
 
     let app = Router::new()
-        // I prefer to prefix my graphql endpoint with /api, but use whatever you like.
-        // just make sure it matches the path in graphql_playground()
         .route(
             "/api/graphql",
             get(graphql_playground).post(graphql_handler),
         )
-        .layer(Extension(schema));
+        .route("/user", post(users))
+        .layer(Extension(schema));   
 
-    // macos Monterey i hate u so much for causing me so much headache to figure out
-    // port 5000 is now taken??
     println!("Playground: http://localhost:8080/api/graphql");
 
     axum::Server::bind(&"0.0.0.0:8080".parse().unwrap())
